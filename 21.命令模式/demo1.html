@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>21.命令模式 —— 视图命令</title>
+</head>
+<body>
+	<div id="titleWarp"></div>
+	<div id="photoWarp">aaaa</div>
+
+    <script>
+
+    	/*创建视图命令*/
+    	var viewCommand = (function() {
+    		/*创建视图模板*/
+    		var tpl = {
+    			/*图片结构*/
+    			product : [
+    				'<div>',
+    					'<img src="{#src#}" alt="">',
+    					'<p>{#text#}</p>',
+    				'</div>',
+    			].join(''),
+
+    			/*标题结构*/
+    			title : [
+    				'<div class="title">',
+    					'<div class="main">',
+    						'<h2>{#title#}</h2>',
+    						'<p>{#tips#}</p>',
+    					'</div>',
+    				'</div>'
+    			].join('')
+    		};
+
+    		/*缓存字符串*/
+    		var html = '';
+
+    		/*格式化字符串*/
+    		function formatString(str,obj) {
+    			return str.replace(/\{#(\w+)#\}/g,function(match,key) {
+    				return obj[key];
+    			})
+    		}
+
+    		/*方法集合*/
+    		var Action = {
+    			/*创建方法*/
+    			create : function (data,view) {
+    				if(data.length){
+    					for(var i=0,len=data.length;i<len;i++){
+    						html += formatString(tpl[view],data[i]);
+    					}
+    				}else{
+    					html += formatString(tpl[view],data);
+    				}
+    			},
+
+    			/*展示方法*/
+    			display : function (container,data,view) {
+    				if(data){
+    					this.create(data,view);
+    				}
+    				document.getElementById(container).innerHTML = html;
+    				html = '';
+    			}
+    		};
+
+    		/*命令接口*/
+    		return function excute ( msg ){
+    			//解析命令，确保msg.param为数组,以满足apply的参数要求
+    			msg.param = Object.prototype.toString.call(msg.param) === '[object Array]' ? msg.param : [msg.param];
+    			//Action 内部调用的方法引用了this，故为保证作用域this执行传入Action
+    			Action[msg.command].apply(Action,msg.param);
+    		}
+    	}());
+
+    	/*调用命令创建标题*/
+		viewCommand({
+			command : 'display',
+			param : [
+				'titleWarp',
+				{
+					title : '吼吼，我是标题！',
+					tips: '我是提示'
+				},
+				'title'
+			]
+		});
+
+		/*调用命令创建图片*/
+		viewCommand({
+			command : 'display',
+			param : [
+				'photoWarp',
+				[
+					{
+						src : 'http://ozgbjelmj.bkt.clouddn.com/sky-ground.jpg',
+						text : '仰望星空与脚踏实地'
+					},{
+						src : 'http://ountlr0uu.bkt.clouddn.com/%E6%88%91%E7%9A%84%E5%AD%A4%E7%8B%AC%E6%98%AF%E4%B8%80%E5%BA%A7%E8%8A%B1%E5%9B%AD%EF%BC%8C%E5%85%B6%E4%B8%AD%E5%8F%AA%E6%9C%89%E4%B8%80%E6%A3%B5%E6%A0%91%E3%80%82BY%E9%98%BF%E5%A4%9A%E5%B0%BC%E6%96%AF.jpg',
+						text : '我的孤独是一座花园，其中只有一棵树。BY阿多尼斯'
+					}
+				],
+				'product'
+			]
+		})
+
+	</script>
+</body>
+</html>
